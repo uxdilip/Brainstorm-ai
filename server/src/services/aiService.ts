@@ -1,19 +1,17 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
 import Groq from 'groq-sdk';
 import Card from '../models/Card';
 
 let groqClient: Groq | null = null;
 
 const getGroqClient = () => {
-  if (!groqClient) {
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) {
-      throw new Error('GROQ_API_KEY is not set in environment variables');
+    if (!groqClient) {
+        const apiKey = process.env.GROQ_API_KEY;
+        if (!apiKey) {
+            throw new Error('GROQ_API_KEY is not set in environment variables');
+        }
+        groqClient = new Groq({ apiKey });
     }
-    groqClient = new Groq({ apiKey });
-  }
-  return groqClient;
+    return groqClient;
 };
 
 export const generateIdeasuggestions = async (
@@ -22,10 +20,10 @@ export const generateIdeasuggestions = async (
 ): Promise<string[]> => {
     try {
         const groq = getGroqClient();
-        
+
         const prompt = `Given a brainstorming board titled "${boardTitle}" with existing ideas: ${existingCards.join(', ')}.
 Generate 3 new creative and diverse ideas that complement the existing ones. Return only the ideas, one per line, without numbering or extra formatting.`;
-        
+
         const completion = await groq.chat.completions.create({
             messages: [
                 {
@@ -33,13 +31,13 @@ Generate 3 new creative and diverse ideas that complement the existing ones. Ret
                     content: prompt
                 }
             ],
-            model: 'llama-3.1-70b-versatile',
+            model: 'llama-3.1-8b-instant',
             temperature: 0.8,
             max_tokens: 200
         });
-        
+
         const response = completion.choices[0]?.message?.content || '';
-        
+
         // Parse the response into an array of suggestions
         return response.split('\n').filter((line: string) => line.trim()).slice(0, 3);
     } catch (error) {
@@ -55,12 +53,12 @@ Generate 3 new creative and diverse ideas that complement the existing ones. Ret
 export const generateBoardSummary = async (cards: string[]): Promise<string> => {
     try {
         const groq = getGroqClient();
-        
+
         const prompt = `Summarize the following brainstorming ideas into a concise paragraph (2-3 sentences):
 ${cards.join('\n- ')}
 
 Provide a high-level overview of the main themes and insights.`;
-        
+
         const completion = await groq.chat.completions.create({
             messages: [
                 {
@@ -68,11 +66,11 @@ Provide a high-level overview of the main themes and insights.`;
                     content: prompt
                 }
             ],
-            model: 'llama-3.1-70b-versatile',
+            model: 'llama-3.1-8b-instant',
             temperature: 0.5,
             max_tokens: 200
         });
-        
+
         return completion.choices[0]?.message?.content || 'Unable to generate summary at this time.';
     } catch (error) {
         console.error('Error generating board summary:', error);
@@ -87,17 +85,17 @@ export const generateEmbedding = async (text: string): Promise<number[]> => {
         // In production, you might want to use a dedicated embedding service
         const words = text.toLowerCase().split(/\s+/);
         const embedding = new Array(384).fill(0); // Standard embedding size
-        
+
         // Generate a simple embedding based on word characteristics
         words.forEach((word, idx) => {
             const hash = word.split('').reduce((acc, char) => {
                 return ((acc << 5) - acc) + char.charCodeAt(0);
             }, 0);
-            
+
             const position = Math.abs(hash) % embedding.length;
             embedding[position] += 1 / (idx + 1); // Weight earlier words more
         });
-        
+
         // Normalize the embedding
         const magnitude = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
         return magnitude > 0 ? embedding.map(val => val / magnitude) : embedding;
@@ -110,13 +108,13 @@ export const generateEmbedding = async (text: string): Promise<number[]> => {
 export const analyzeMood = async (content: string): Promise<string> => {
     try {
         const groq = getGroqClient();
-        
+
         const prompt = `Analyze the mood/sentiment of the following text and respond with ONLY ONE WORD from this list: positive, negative, neutral, excited, thoughtful.
 
 Text: "${content}"
 
 Respond with only the mood word, nothing else.`;
-        
+
         const completion = await groq.chat.completions.create({
             messages: [
                 {
@@ -124,13 +122,13 @@ Respond with only the mood word, nothing else.`;
                     content: prompt
                 }
             ],
-            model: 'llama-3.1-70b-versatile',
+            model: 'llama-3.1-8b-instant',
             temperature: 0.3,
             max_tokens: 10
         });
-        
+
         const mood = completion.choices[0]?.message?.content?.trim().toLowerCase() || 'neutral';
-        
+
         // Validate the mood is one of the expected values
         const validMoods = ['positive', 'negative', 'neutral', 'excited', 'thoughtful'];
         return validMoods.includes(mood) ? mood : 'neutral';

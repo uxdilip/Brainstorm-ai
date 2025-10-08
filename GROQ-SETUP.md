@@ -42,10 +42,11 @@ The server will automatically pick up the new key!
 
 ## Models Used
 
-- **Chat/Completion Tasks**: `llama-3.1-70b-versatile`
+- **Chat/Completion Tasks**: `llama-3.1-8b-instant`
   - Idea suggestions
   - Board summaries
   - Mood analysis
+  - Fast and efficient for all text generation tasks
   
 - **Embeddings**: Custom hash-based approach (384 dimensions)
   - Semantic search
