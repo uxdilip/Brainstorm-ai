@@ -6,11 +6,11 @@ import { AuthProvider } from './context/AuthContext';
 import { BoardProvider } from './context/BoardContext';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <AuthProvider>
-      <BoardProvider>
-        <App />
-      </BoardProvider>
-    </AuthProvider>
-  </React.StrictMode>
+    <React.StrictMode>
+        <AuthProvider>
+            <BoardProvider>
+                <App />
+            </BoardProvider>
+        </AuthProvider>
+    </React.StrictMode>
 );
