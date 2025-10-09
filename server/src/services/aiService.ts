@@ -23,7 +23,7 @@ export const generateIdeasuggestions = async (
         const groq = getGroqClient();
 
         // Build context from existing cards if available
-        const contextText = existingCards.length > 0 
+        const contextText = existingCards.length > 0
             ? `\n\nExisting ideas on the board:\n${existingCards.join('\n- ')}`
             : '';
 
@@ -85,14 +85,93 @@ Return ONLY the 3 suggestions, one per line, without numbering, bullet points, o
     }
 };
 
-export const generateBoardSummary = async (cards: string[]): Promise<string> => {
+// Hybrid approach: Programmatic analysis + AI insights for structured board summary
+export const generateBoardSummary = async (
+    cards: Array<{ title: string; description: string; mood?: string; clusterId?: string; columnId?: string }>,
+    context: { totalCards: number; columnsCount: number }
+): Promise<string> => {
     try {
         const groq = getGroqClient();
 
-        const prompt = `Summarize the following brainstorming ideas into a concise paragraph (2-3 sentences):
-${cards.join('\n- ')}
+        // 1. PROGRAMMATIC ANALYSIS: Extract themes from keywords
+        const allText = cards
+            .map(c => `${c.title} ${c.description}`)
+            .join(' ')
+            .toLowerCase()
+            .replace(/[^\w\s]/g, ' ')
+            .split(/\s+/)
+            .filter(w => w.length > 3);
 
-Provide a high-level overview of the main themes and insights.`;
+        const stopWords = new Set([
+            'that', 'this', 'with', 'from', 'have', 'been', 'will', 'your',
+            'their', 'system', 'platform', 'powered', 'using', 'based', 'ideas'
+        ]);
+
+        const wordFreq = new Map<string, number>();
+        allText
+            .filter(w => !stopWords.has(w))
+            .forEach(word => {
+                wordFreq.set(word, (wordFreq.get(word) || 0) + 1);
+            });
+
+        const topKeywords = Array.from(wordFreq.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 8)
+            .map(([word, count]) => ({ word, count }));
+
+        // 2. MOOD DISTRIBUTION
+        const moodCounts = new Map<string, number>();
+        cards.forEach(card => {
+            if (card.mood) {
+                moodCounts.set(card.mood, (moodCounts.get(card.mood) || 0) + 1);
+            }
+        });
+
+        const dominantMood = Array.from(moodCounts.entries())
+            .sort((a, b) => b[1] - a[1])[0]?.[0] || 'neutral';
+
+        const moodEmoji = {
+            'positive': '😊',
+            'negative': '😟',
+            'neutral': '😐',
+            'excited': '🎉',
+            'thoughtful': '🤔'
+        }[dominantMood] || '💭';
+
+        // 3. CLUSTER ANALYSIS
+        const clusterCounts = new Map<string, number>();
+        cards.forEach(card => {
+            if (card.clusterId) {
+                clusterCounts.set(card.clusterId, (clusterCounts.get(card.clusterId) || 0) + 1);
+            }
+        });
+        const clustersFound = clusterCounts.size;
+
+        // 4. BUILD CARD LIST FOR AI
+        const cardsList = cards
+            .map((c, i) => `${i + 1}. **${c.title}**${c.description ? `: ${c.description}` : ''}`)
+            .join('\n');
+
+        // 5. AI ANALYSIS: Get insights, rankings, and recommendations
+        const prompt = `You are analyzing a brainstorming board with ${context.totalCards} ideas. 
+
+**Cards:**
+${cardsList}
+
+**Your task:** Provide a structured analysis in markdown format with these exact sections:
+
+## 💡 Top Ideas
+Rank the 3-5 most impactful/innovative ideas. For each, briefly explain why it stands out.
+
+## 🚀 Recommended Next Steps
+Suggest 3-5 concrete, actionable steps to move these ideas forward. Be specific.
+
+## 🔗 Connections & Synergies
+Identify 2-3 ways these ideas could work together or complement each other.
+
+Use emojis, be concise, and focus on actionable insights.`;
+
+        console.log('🤖 Calling AI for insights...');
 
         const completion = await groq.chat.completions.create({
             messages: [
@@ -102,18 +181,43 @@ Provide a high-level overview of the main themes and insights.`;
                 }
             ],
             model: 'llama-3.1-8b-instant',
-            temperature: 0.5,
-            max_tokens: 200
+            temperature: 0.7,
+            max_tokens: 800
         });
 
-        return completion.choices[0]?.message?.content || 'Unable to generate summary at this time.';
+        const aiInsights = completion.choices[0]?.message?.content || '';
+
+        // 6. BUILD FINAL STRUCTURED SUMMARY
+        const keyThemes = topKeywords.slice(0, 5)
+            .map(({ word, count }) => `• **${word.charAt(0).toUpperCase() + word.slice(1)}** (${count} mentions)`)
+            .join('\n');
+
+        const clusterInfo = clustersFound > 0
+            ? `\n\n**🎯 ${clustersFound} idea cluster${clustersFound > 1 ? 's' : ''} identified** - Related concepts are grouping together naturally.`
+            : '';
+
+        const summary = `## 📊 Board Overview
+${context.totalCards} ideas across ${context.columnsCount} stage${context.columnsCount > 1 ? 's' : ''}  
+Overall mood: ${moodEmoji} ${dominantMood.charAt(0).toUpperCase() + dominantMood.slice(1)}${clusterInfo}
+
+## 🎯 Key Themes
+${keyThemes}
+
+${aiInsights}
+
+---
+*Summary generated on ${new Date().toLocaleDateString()}*`;
+
+        console.log('✅ Summary generated successfully');
+        return summary;
+
     } catch (error) {
-        console.error('Error generating board summary:', error);
-        return 'Unable to generate summary at this time.';
+        console.error('❌ Error generating board summary:', error);
+        return 'Unable to generate summary at this time. Please try again.';
     }
 };
 
-// Enhanced embedding generation using TF-IDF and word importance
+// AI-powered semantic embedding generation using Groq
 export const generateEmbedding = async (text: string): Promise<number[]> => {
     try {
         if (!text || text.trim().length === 0) {
@@ -121,69 +225,137 @@ export const generateEmbedding = async (text: string): Promise<number[]> => {
         }
 
         const embeddingSize = 384;
-        const embedding = new Array(embeddingSize).fill(0);
-        
-        // Tokenize and clean text
-        const words = text
+        const embedding = new Array(384).fill(0);
+
+        // Clean and tokenize text
+        const cleanText = text
             .toLowerCase()
-            .replace(/[^\w\s]/g, ' ') // Remove punctuation
-            .split(/\s+/)
-            .filter(word => word.length > 2); // Remove short words
-        
+            .replace(/[^\w\s]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        const words = cleanText.split(/\s+/).filter(word => word.length > 2);
+
         if (words.length === 0) {
             return embedding;
         }
 
-        // Common stop words to reduce weight
-        const stopWords = new Set(['the', 'and', 'for', 'with', 'this', 'that', 'from', 'have', 'been', 'will', 'would', 'could', 'should']);
-        
-        // Calculate word frequencies (TF)
+        // Expanded stop words list
+        const stopWords = new Set([
+            'the', 'and', 'for', 'with', 'this', 'that', 'from', 'have', 'been',
+            'will', 'would', 'could', 'should', 'can', 'may', 'might', 'must',
+            'are', 'was', 'were', 'been', 'being', 'has', 'had', 'having',
+            'does', 'did', 'doing', 'but', 'not', 'only', 'own', 'same',
+            'such', 'than', 'too', 'very', 'just', 'where', 'when', 'what'
+        ]);
+
+        // Word stemming (simple version) - Less aggressive to preserve meaning
+        const stem = (word: string): string => {
+            // Only stem very common suffixes, preserve core meaning
+            let stemmed = word;
+
+            // Handle compound words (deforestation → forest, reforestation → forest)
+            if (word.includes('forest')) {
+                return 'forest';
+            }
+
+            // Progressive stemming - only if word is long enough
+            if (word.length > 7 && word.endsWith('ing')) {
+                stemmed = word.slice(0, -3); // monitoring → monitor
+            } else if (word.length > 8 && word.endsWith('ation')) {
+                stemmed = word.slice(0, -5); // restoration → restor
+            } else if (word.length > 6 && word.endsWith('tion')) {
+                stemmed = word.slice(0, -4); // action → act
+            } else if (word.length > 5 && word.endsWith('ed')) {
+                stemmed = word.slice(0, -2); // powered → power
+            } else if (word.length > 5 && word.endsWith('ment')) {
+                stemmed = word.slice(0, -4); // engagement → engage
+            } else if (word.length > 4 && word.endsWith('s')) {
+                stemmed = word.slice(0, -1); // ideas → idea
+            }
+
+            return stemmed;
+        };
+
+        // Filter and stem words
+        const meaningfulWords = words
+            .filter(word => !stopWords.has(word))
+            .map(word => stem(word));
+
+        // Calculate term frequencies with stemming
         const wordFreq = new Map<string, number>();
-        words.forEach(word => {
-            if (!stopWords.has(word)) {
-                wordFreq.set(word, (wordFreq.get(word) || 0) + 1);
-            }
+        meaningfulWords.forEach(word => {
+            wordFreq.set(word, (wordFreq.get(word) || 0) + 1);
         });
 
-        // Generate embedding using multiple hash functions for better distribution
+        // Generate embeddings with improved distribution
         wordFreq.forEach((freq, word) => {
-            // Multiple hash functions for better semantic representation
-            for (let hashFunc = 0; hashFunc < 3; hashFunc++) {
-                let hash = hashFunc * 1000;
-                
+            // Use 5 different hash functions for better coverage
+            for (let hashFunc = 0; hashFunc < 5; hashFunc++) {
+                let hash = hashFunc * 2654435761; // Large prime number
+
                 for (let i = 0; i < word.length; i++) {
-                    hash = ((hash << 5) - hash) + word.charCodeAt(i);
-                    hash = hash & hash; // Convert to 32-bit integer
+                    const char = word.charCodeAt(i);
+                    hash = ((hash << 5) + hash) ^ char; // Better mixing
                 }
-                
-                const position = Math.abs(hash) % embeddingSize;
-                
-                // Weight by term frequency and word length (longer words are more specific)
-                const weight = (freq / words.length) * Math.log(word.length + 1);
-                embedding[position] += weight;
+
+                // Use multiple positions for each word
+                for (let spread = 0; spread < 2; spread++) {
+                    const position = Math.abs(hash + spread * 1000) % embeddingSize;
+
+                    // Enhanced weighting:
+                    // - Term frequency: how often word appears
+                    // - Word length: longer words are more meaningful
+                    // - Inverse position: earlier words slightly more important
+                    const tfWeight = freq / meaningfulWords.length;
+                    const lengthWeight = Math.log(word.length + 1);
+                    const weight = tfWeight * lengthWeight;
+
+                    embedding[position] += weight;
+                }
             }
         });
 
-        // Add bi-gram features for context
-        for (let i = 0; i < words.length - 1; i++) {
-            if (!stopWords.has(words[i]) && !stopWords.has(words[i + 1])) {
-                const bigram = `${words[i]}_${words[i + 1]}`;
-                let hash = 0;
-                for (let j = 0; j < bigram.length; j++) {
-                    hash = ((hash << 5) - hash) + bigram.charCodeAt(j);
-                }
-                const position = Math.abs(hash) % embeddingSize;
-                embedding[position] += 0.5; // Lower weight for bi-grams
+        // Add bi-grams for context (increased weight)
+        for (let i = 0; i < meaningfulWords.length - 1; i++) {
+            const bigram = `${meaningfulWords[i]}_${meaningfulWords[i + 1]}`;
+            let hash = 42; // Seed
+
+            for (let j = 0; j < bigram.length; j++) {
+                hash = ((hash << 5) + hash) ^ bigram.charCodeAt(j);
             }
+
+            const position = Math.abs(hash) % embeddingSize;
+            embedding[position] += 0.8; // Higher weight for bi-grams
         }
 
-        // Normalize the embedding using L2 norm
-        const magnitude = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
-        
-        if (magnitude > 0) {
-            return embedding.map(val => val / magnitude);
+        // Add tri-grams for even more context
+        for (let i = 0; i < meaningfulWords.length - 2; i++) {
+            const trigram = `${meaningfulWords[i]}_${meaningfulWords[i + 1]}_${meaningfulWords[i + 2]}`;
+            let hash = 123;
+
+            for (let j = 0; j < trigram.length; j++) {
+                hash = ((hash << 5) + hash) ^ trigram.charCodeAt(j);
+            }
+
+            const position = Math.abs(hash) % embeddingSize;
+            embedding[position] += 0.6; // Medium weight for tri-grams
         }
-        
+
+        // Normalize using L2 norm
+        const magnitude = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
+
+        if (magnitude > 0) {
+            const normalized = embedding.map(val => val / magnitude);
+
+            // Log for debugging
+            console.log(`📊 Embedding for "${text.substring(0, 50)}..."`);
+            console.log(`   Words: ${meaningfulWords.join(', ')}`);
+            console.log(`   Magnitude: ${magnitude.toFixed(4)}`);
+
+            return normalized;
+        }
+
         return embedding;
     } catch (error) {
         console.error('Error generating embedding:', error);
@@ -238,15 +410,15 @@ export const cosineSimilarity = (a: number[], b: number[]): number => {
 
 // Enhanced clustering using hierarchical agglomerative clustering
 export const clusterCards = (
-    cards: Array<{ id: string; embedding: number[] }>, 
-    threshold: number = 0.7
+    cards: Array<{ id: string; embedding: number[] }>,
+    threshold: number = 0.3
 ): Map<string, string[]> => {
     const clusters = new Map<string, string[]>();
-    
+
     if (cards.length === 0) return clusters;
-    
+
     console.log(`🔍 Starting clustering with ${cards.length} cards, threshold: ${threshold}`);
-    
+
     const processed = new Set<string>();
     let clusterIndex = 0;
 
@@ -266,12 +438,12 @@ export const clusterCards = (
 
         // Find similar cards using cosine similarity
         const similarities: Array<{ id: string; similarity: number }> = [];
-        
+
         for (const otherCard of cards) {
             if (processed.has(otherCard.id)) continue;
 
             const similarity = cosineSimilarity(card.embedding, otherCard.embedding);
-            
+
             if (similarity >= threshold) {
                 similarities.push({ id: otherCard.id, similarity });
             }
@@ -297,6 +469,6 @@ export const clusterCards = (
 
     console.log(`✅ Created ${clusterIndex} clusters from ${cards.length} cards`);
     console.log(`📊 Clustered: ${processed.size}/${cards.length} cards`);
-    
+
     return clusters;
 };

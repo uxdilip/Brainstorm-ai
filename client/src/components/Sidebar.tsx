@@ -8,8 +8,9 @@ export const Sidebar = () => {
     const [activeTab, setActiveTab] = useState<'suggestions' | 'summary' | 'search'>('suggestions');
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [searching, setSearching] = useState(false);
     const [showSidebar, setShowSidebar] = useState(true);
-    const [clusterThreshold, setClusterThreshold] = useState(0.7);
+    const [clusterThreshold, setClusterThreshold] = useState(0.3);
 
     const handleCluster = async () => {
         await clusterCards(clusterThreshold);
@@ -22,8 +23,20 @@ export const Sidebar = () => {
 
     const handleSearch = async () => {
         if (!searchQuery.trim()) return;
-        const results = await searchCards(searchQuery);
-        setSearchResults(results);
+
+        setSearching(true);
+        console.log('🔍 Searching for:', searchQuery);
+
+        try {
+            const results = await searchCards(searchQuery);
+            console.log('✅ Search results:', results);
+            setSearchResults(results);
+        } catch (error) {
+            console.error('❌ Search failed:', error);
+            setSearchResults([]);
+        } finally {
+            setSearching(false);
+        }
     };
 
     const addSuggestion = async (suggestion: string) => {
@@ -46,7 +59,7 @@ export const Sidebar = () => {
         return (
             <button
                 onClick={() => setShowSidebar(true)}
-                className="fixed right-4 top-20 bg-white/10 backdrop-blur-md text-white p-3 rounded-lg hover:bg-white/20 transition-colors z-10"
+                className="fixed right-4 top-20 bg-white text-[#2383e2] shadow-lg p-3 rounded-lg hover:shadow-xl transition-all z-10 border border-[#e9e9e7]"
             >
                 <Sparkles className="w-5 h-5" />
             </button>
@@ -54,15 +67,15 @@ export const Sidebar = () => {
     }
 
     return (
-        <div className="w-96 bg-white/10 backdrop-blur-md border-l border-white/20 p-4 flex flex-col overflow-hidden">
+        <div className="w-96 bg-white border-l border-[#e9e9e7] p-4 flex flex-col overflow-hidden shadow-lg">
             <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                    <Sparkles className="w-6 h-6" />
+                <h2 className="text-lg font-semibold text-[#37352f] flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-[#2383e2]" />
                     AI Assistant
                 </h2>
                 <button
                     onClick={() => setShowSidebar(false)}
-                    className="text-white hover:bg-white/20 p-1 rounded transition-colors"
+                    className="text-[#9b9a97] hover:bg-[#f1f1ef] p-1.5 rounded-md transition-colors"
                 >
                     <X className="w-5 h-5" />
                 </button>
@@ -71,21 +84,21 @@ export const Sidebar = () => {
             <div className="flex gap-2 mb-4">
                 <button
                     onClick={() => setActiveTab('suggestions')}
-                    className={`flex-1 py-2 px-3 rounded-lg transition-colors text-sm ${activeTab === 'suggestions' ? 'bg-white text-primary-600 font-semibold' : 'bg-white/20 text-white'
+                    className={`flex-1 py-2 px-3 rounded-md transition-colors text-sm font-medium ${activeTab === 'suggestions' ? 'bg-[#e5f2ff] text-[#2383e2]' : 'bg-[#f7f6f3] text-[#787774] hover:bg-[#f1f1ef]'
                         }`}
                 >
                     Ideas
                 </button>
                 <button
                     onClick={() => setActiveTab('summary')}
-                    className={`flex-1 py-2 px-3 rounded-lg transition-colors text-sm ${activeTab === 'summary' ? 'bg-white text-primary-600 font-semibold' : 'bg-white/20 text-white'
+                    className={`flex-1 py-2 px-3 rounded-md transition-colors text-sm font-medium ${activeTab === 'summary' ? 'bg-[#e5f2ff] text-[#2383e2]' : 'bg-[#f7f6f3] text-[#787774] hover:bg-[#f1f1ef]'
                         }`}
                 >
                     Summary
                 </button>
                 <button
                     onClick={() => setActiveTab('search')}
-                    className={`flex-1 py-2 px-3 rounded-lg transition-colors text-sm ${activeTab === 'search' ? 'bg-white text-primary-600 font-semibold' : 'bg-white/20 text-white'
+                    className={`flex-1 py-2 px-3 rounded-md transition-colors text-sm font-medium ${activeTab === 'search' ? 'bg-[#e5f2ff] text-[#2383e2]' : 'bg-[#f7f6f3] text-[#787774] hover:bg-[#f1f1ef]'
                         }`}
                 >
                     Search
@@ -97,7 +110,7 @@ export const Sidebar = () => {
                     <button
                         onClick={handleCluster}
                         disabled={loading}
-                        className="flex-1 bg-white/20 text-white py-2 px-3 rounded-lg hover:bg-white/30 transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+                        className="flex-1 bg-[#f7f6f3] text-[#37352f] py-2 px-3 rounded-md hover:bg-[#f1f1ef] transition-colors flex items-center justify-center gap-2 text-sm font-medium disabled:opacity-50 border border-[#e9e9e7]"
                     >
                         <Layers className="w-4 h-4" />
                         Cluster
@@ -105,7 +118,7 @@ export const Sidebar = () => {
                     <button
                         onClick={handleSummarize}
                         disabled={loading}
-                        className="flex-1 bg-white/20 text-white py-2 px-3 rounded-lg hover:bg-white/30 transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+                        className="flex-1 bg-[#f7f6f3] text-[#37352f] py-2 px-3 rounded-md hover:bg-[#f1f1ef] transition-colors flex items-center justify-center gap-2 text-sm font-medium disabled:opacity-50 border border-[#e9e9e7]"
                     >
                         <FileText className="w-4 h-4" />
                         Summarize
@@ -113,28 +126,28 @@ export const Sidebar = () => {
                     <button
                         onClick={exportMarkdown}
                         disabled={!summary}
-                        className="bg-white/20 text-white py-2 px-3 rounded-lg hover:bg-white/30 transition-colors disabled:opacity-50"
+                        className="bg-[#f7f6f3] text-[#37352f] py-2 px-3 rounded-md hover:bg-[#f1f1ef] transition-colors disabled:opacity-50 border border-[#e9e9e7]"
                     >
                         <Download className="w-4 h-4" />
                     </button>
                 </div>
-                
+
                 {/* Cluster Threshold Slider */}
-                <div className="bg-white/10 rounded-lg p-3">
+                <div className="bg-[#f7f6f3] rounded-lg p-3 border border-[#e9e9e7]">
                     <div className="flex items-center justify-between mb-2">
-                        <label className="text-white text-xs font-medium">Similarity Threshold</label>
-                        <span className="text-white text-xs bg-white/20 px-2 py-0.5 rounded">{clusterThreshold.toFixed(2)}</span>
+                        <label className="text-[#37352f] text-xs font-medium">Similarity Threshold</label>
+                        <span className="text-[#787774] text-xs bg-white px-2 py-0.5 rounded border border-[#e9e9e7]">{clusterThreshold.toFixed(2)}</span>
                     </div>
                     <input
                         type="range"
-                        min="0.5"
+                        min="0.2"
                         max="0.95"
                         step="0.05"
                         value={clusterThreshold}
                         onChange={(e) => setClusterThreshold(parseFloat(e.target.value))}
-                        className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-2 bg-[#e9e9e7] rounded-lg appearance-none cursor-pointer accent-[#2383e2]"
                     />
-                    <div className="flex justify-between text-white/60 text-xs mt-1">
+                    <div className="flex justify-between text-[#9b9a97] text-xs mt-1">
                         <span>Loose</span>
                         <span>Tight</span>
                     </div>
@@ -142,8 +155,8 @@ export const Sidebar = () => {
 
                 {/* Cluster Info */}
                 {clusters && clusters.length > 0 && (
-                    <div className="bg-primary-500/20 border border-primary-400/30 rounded-lg p-3">
-                        <p className="text-white text-xs">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <p className="text-[#37352f] text-xs">
                             🎯 Found <strong>{clusters.length}</strong> cluster{clusters.length > 1 ? 's' : ''} of similar ideas!
                         </p>
                     </div>
@@ -154,44 +167,44 @@ export const Sidebar = () => {
                 {activeTab === 'suggestions' && (
                     <div className="space-y-3">
                         <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-white font-semibold">💡 AI Suggestions</h3>
+                            <h3 className="text-[#37352f] font-semibold text-sm">💡 AI Suggestions</h3>
                             {suggestions.length > 0 && (
-                                <span className="text-xs text-white/70 bg-white/20 px-2 py-1 rounded">
+                                <span className="text-xs text-[#787774] bg-[#f7f6f3] px-2 py-1 rounded border border-[#e9e9e7]">
                                     {suggestions.length} ideas
                                 </span>
                             )}
                         </div>
                         {loading ? (
                             <div className="flex flex-col items-center justify-center py-8 space-y-2">
-                                <Loader className="w-6 h-6 text-white animate-spin" />
-                                <p className="text-white/70 text-sm">Generating creative suggestions...</p>
+                                <Loader className="w-6 h-6 text-[#2383e2] animate-spin" />
+                                <p className="text-[#787774] text-sm">Generating creative suggestions...</p>
                             </div>
                         ) : suggestions.length === 0 ? (
-                            <div className="bg-white/10 rounded-lg p-4 text-center">
-                                <Sparkles className="w-12 h-12 text-white/50 mx-auto mb-2" />
-                                <p className="text-white/70 text-sm">
+                            <div className="bg-[#f7f6f3] rounded-lg p-4 text-center border border-[#e9e9e7]">
+                                <Sparkles className="w-12 h-12 text-[#9b9a97] mx-auto mb-2" />
+                                <p className="text-[#787774] text-sm">
                                     Add a new card to get AI-powered idea suggestions!
                                 </p>
-                                <p className="text-white/50 text-xs mt-2">
+                                <p className="text-[#9b9a97] text-xs mt-2">
                                     I'll analyze your idea and suggest 3 related concepts
                                 </p>
                             </div>
                         ) : (
                             <>
-                                <div className="bg-primary-500/20 border border-primary-400/30 rounded-lg p-3 mb-3">
-                                    <p className="text-white/90 text-xs">
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                                    <p className="text-[#37352f] text-xs">
                                         💡 Click "Add to Board" to quickly create a card from any suggestion
                                     </p>
                                 </div>
                                 {suggestions.map((suggestion, index) => (
-                                    <div key={index} className="bg-white/20 rounded-lg p-3 hover:bg-white/30 transition-colors border border-white/10">
+                                    <div key={index} className="bg-white rounded-lg p-3 hover:shadow-md transition-all border border-[#e9e9e7]">
                                         <div className="flex items-start gap-2 mb-2">
-                                            <span className="text-primary-300 font-bold text-sm">{index + 1}.</span>
-                                            <p className="text-white text-sm flex-1">{suggestion}</p>
+                                            <span className="text-[#2383e2] font-bold text-sm">{index + 1}.</span>
+                                            <p className="text-[#37352f] text-sm flex-1">{suggestion}</p>
                                         </div>
                                         <button
                                             onClick={() => addSuggestion(suggestion)}
-                                            className="w-full text-xs bg-white text-primary-600 px-3 py-2 rounded hover:bg-gray-100 transition-colors font-medium flex items-center justify-center gap-1"
+                                            className="w-full text-xs bg-[#2383e2] text-white px-3 py-2 rounded-md hover:bg-[#1a73cf] transition-colors font-medium flex items-center justify-center gap-1"
                                         >
                                             <span>+</span> Add to Board
                                         </button>
@@ -203,25 +216,55 @@ export const Sidebar = () => {
                 )}
 
                 {activeTab === 'summary' && (
-                    <div className="bg-white/20 rounded-lg p-4">
-                        <h3 className="text-white font-semibold mb-3">Board Summary</h3>
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-[#37352f] font-semibold text-sm">Board Summary</h3>
+                            {summary && (
+                                <button
+                                    onClick={exportMarkdown}
+                                    className="text-[#787774] hover:text-[#37352f] text-xs flex items-center gap-1"
+                                >
+                                    <Download className="w-3 h-3" />
+                                    Export
+                                </button>
+                            )}
+                        </div>
                         {loading ? (
-                            <div className="flex items-center justify-center py-8">
-                                <Loader className="w-6 h-6 text-white animate-spin" />
+                            <div className="flex items-center justify-center py-8 bg-[#f7f6f3] rounded-lg border border-[#e9e9e7]">
+                                <Loader className="w-6 h-6 text-[#2383e2] animate-spin" />
                             </div>
                         ) : summary ? (
-                            <div className="text-white text-sm prose prose-invert max-w-none">
-                                <ReactMarkdown>{summary}</ReactMarkdown>
+                            <div className="bg-[#f7f6f3] rounded-lg p-4 max-h-[calc(100vh-300px)] overflow-y-auto border border-[#e9e9e7]">
+                                <div className="text-[#37352f] text-sm prose max-w-none prose-headings:text-[#37352f] prose-strong:text-[#37352f] prose-p:text-[#37352f] prose-li:text-[#37352f]">
+                                    <ReactMarkdown
+                                        components={{
+                                            h2: ({ node, ...props }) => <h2 className="text-base font-bold mt-4 mb-2 first:mt-0 text-[#37352f]" {...props} />,
+                                            h3: ({ node, ...props }) => <h3 className="text-sm font-semibold mt-3 mb-1 text-[#37352f]" {...props} />,
+                                            ul: ({ node, ...props }) => <ul className="space-y-1 mb-3" {...props} />,
+                                            ol: ({ node, ...props }) => <ol className="space-y-1 mb-3" {...props} />,
+                                            li: ({ node, ...props }) => <li className="text-[#37352f]" {...props} />,
+                                            p: ({ node, ...props }) => <p className="mb-2 text-[#37352f]" {...props} />,
+                                            strong: ({ node, ...props }) => <strong className="text-[#37352f] font-semibold" {...props} />,
+                                            hr: ({ node, ...props }) => <hr className="border-[#e9e9e7] my-4" {...props} />,
+                                        }}
+                                    >
+                                        {summary}
+                                    </ReactMarkdown>
+                                </div>
                             </div>
                         ) : (
-                            <p className="text-white/70 text-sm">Click 'Summarize' to generate an AI summary of your board</p>
+                            <div className="bg-[#f7f6f3] rounded-lg p-6 text-center border border-[#e9e9e7]">
+                                <FileText className="w-12 h-12 text-[#9b9a97] mx-auto mb-3" />
+                                <p className="text-[#787774] text-sm">Click 'Summarize' to generate an AI-powered analysis of your board</p>
+                                <p className="text-[#9b9a97] text-xs mt-2">Get key themes, top ideas, and next steps</p>
+                            </div>
                         )}
                     </div>
                 )}
 
                 {activeTab === 'search' && (
                     <div className="space-y-3">
-                        <h3 className="text-white font-semibold mb-2">Semantic Search</h3>
+                        <h3 className="text-[#37352f] font-semibold mb-2 text-sm">Semantic Search</h3>
                         <div className="flex gap-2">
                             <input
                                 type="text"
@@ -229,24 +272,56 @@ export const Sidebar = () => {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                                 placeholder="Search ideas..."
-                                className="flex-1 px-3 py-2 rounded-lg bg-white/20 text-white placeholder-white/50 outline-none focus:ring-2 focus:ring-white/50"
+                                className="flex-1 px-3 py-2 rounded-md bg-white border border-[#e9e9e7] text-[#37352f] placeholder-[#9b9a97] outline-none focus:border-[#2383e2] focus:ring-1 focus:ring-[#2383e2] text-sm transition-all"
+                                disabled={searching}
                             />
                             <button
                                 onClick={handleSearch}
-                                className="bg-white text-primary-600 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                                disabled={searching || !searchQuery.trim()}
+                                className="bg-[#2383e2] text-white p-2 rounded-md hover:bg-[#1a73cf] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <Search className="w-5 h-5" />
+                                {searching ? (
+                                    <Loader className="w-5 h-5 animate-spin" />
+                                ) : (
+                                    <Search className="w-5 h-5" />
+                                )}
                             </button>
                         </div>
+
+                        {/* Search Results */}
                         <div className="space-y-2 mt-4">
-                            {searchResults.map((card) => (
-                                <div key={card._id} className="bg-white/20 rounded-lg p-3">
-                                    <h4 className="text-white font-medium text-sm">{card.title}</h4>
-                                    {card.description && (
-                                        <p className="text-white/70 text-xs mt-1">{card.description}</p>
-                                    )}
+                            {searching ? (
+                                <div className="flex items-center justify-center py-8 text-[#787774]">
+                                    <Loader className="w-6 h-6 animate-spin mr-2 text-[#2383e2]" />
+                                    <span className="text-sm">Searching...</span>
                                 </div>
-                            ))}
+                            ) : searchResults.length > 0 ? (
+                                <>
+                                    <div className="text-[#787774] text-xs mb-2">
+                                        Found {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}
+                                    </div>
+                                    {searchResults.map((card) => (
+                                        <div key={card._id} className="bg-white rounded-lg p-3 hover:shadow-md transition-all border border-[#e9e9e7]">
+                                            <h4 className="text-[#37352f] font-medium text-sm">{card.title}</h4>
+                                            {card.description && (
+                                                <p className="text-[#787774] text-xs mt-1 line-clamp-2">{card.description}</p>
+                                            )}
+                                        </div>
+                                    ))}
+                                </>
+                            ) : searchQuery && !searching ? (
+                                <div className="flex flex-col items-center justify-center py-8 text-[#9b9a97] text-center">
+                                    <Search className="w-12 h-12 mb-3 opacity-50" />
+                                    <p className="text-sm">No matching cards found</p>
+                                    <p className="text-xs mt-1">Try different keywords</p>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-8 text-[#9b9a97] text-center">
+                                    <Search className="w-12 h-12 mb-3 opacity-50" />
+                                    <p className="text-sm">Enter a search query</p>
+                                    <p className="text-xs mt-1">Find cards by meaning, not just keywords</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}

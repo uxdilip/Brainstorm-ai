@@ -45,25 +45,25 @@ export const CardComponent = ({ card }: CardProps) => {
 
     const getClusterColor = (clusterId?: string) => {
         if (!clusterId) return { bg: '', border: '', label: '' };
-        
+
         const colors = [
-            { bg: 'bg-blue-50', border: 'border-blue-400', label: 'bg-blue-500' },
-            { bg: 'bg-green-50', border: 'border-green-400', label: 'bg-green-500' },
-            { bg: 'bg-purple-50', border: 'border-purple-400', label: 'bg-purple-500' },
-            { bg: 'bg-orange-50', border: 'border-orange-400', label: 'bg-orange-500' },
-            { bg: 'bg-pink-50', border: 'border-pink-400', label: 'bg-pink-500' },
-            { bg: 'bg-yellow-50', border: 'border-yellow-400', label: 'bg-yellow-500' },
-            { bg: 'bg-indigo-50', border: 'border-indigo-400', label: 'bg-indigo-500' },
-            { bg: 'bg-red-50', border: 'border-red-400', label: 'bg-red-500' }
+            { bg: 'bg-blue-50/60', border: 'border-blue-300/40', label: 'bg-blue-500/90' },
+            { bg: 'bg-green-50/60', border: 'border-green-300/40', label: 'bg-green-500/90' },
+            { bg: 'bg-purple-50/60', border: 'border-purple-300/40', label: 'bg-purple-500/90' },
+            { bg: 'bg-orange-50/60', border: 'border-orange-300/40', label: 'bg-orange-500/90' },
+            { bg: 'bg-pink-50/60', border: 'border-pink-300/40', label: 'bg-pink-500/90' },
+            { bg: 'bg-yellow-50/60', border: 'border-yellow-300/40', label: 'bg-yellow-500/90' },
+            { bg: 'bg-indigo-50/60', border: 'border-indigo-300/40', label: 'bg-indigo-500/90' },
+            { bg: 'bg-red-50/60', border: 'border-red-300/40', label: 'bg-red-500/90' }
         ];
-        
+
         const index = parseInt(clusterId.replace('cluster-', '')) % colors.length;
         return colors[index];
     };
 
     const getClusterLabel = (clusterId?: string) => {
         if (!clusterId) return null;
-        
+
         const clusterNum = parseInt(clusterId.replace('cluster-', ''));
         const labels = ['💎', '🌟', '🎯', '🔥', '💡', '🚀', '⚡', '🌈'];
         return labels[clusterNum % labels.length];
@@ -71,29 +71,29 @@ export const CardComponent = ({ card }: CardProps) => {
 
     if (isEditing) {
         return (
-            <div className="bg-white rounded-lg p-3 shadow-sm space-y-2">
+            <div className="bg-white rounded-lg p-3 shadow-md border border-[#e9e9e7] space-y-2">
                 <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-2 py-1 border border-gray-300 rounded text-sm outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-2 py-1 border border-[#e9e9e7] rounded-md text-sm text-[#37352f] outline-none focus:border-[#2383e2] focus:ring-1 focus:ring-[#2383e2] transition-all"
                 />
                 <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-2 py-1 border border-gray-300 rounded text-sm outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                    className="w-full px-2 py-1 border border-[#e9e9e7] rounded-md text-sm text-[#37352f] outline-none focus:border-[#2383e2] focus:ring-1 focus:ring-[#2383e2] resize-none transition-all"
                     rows={2}
                 />
                 <div className="flex gap-2">
                     <button
                         onClick={handleSave}
-                        className="flex-1 bg-primary-600 text-white py-1 rounded hover:bg-primary-700 text-xs"
+                        className="flex-1 bg-[#2383e2] text-white py-1 rounded-md hover:bg-[#1a73cf] text-xs font-medium transition-colors"
                     >
                         Save
                     </button>
                     <button
                         onClick={() => setIsEditing(false)}
-                        className="flex-1 bg-gray-200 text-gray-700 py-1 rounded hover:bg-gray-300 text-xs"
+                        className="flex-1 bg-[#f1f1ef] text-[#787774] py-1 rounded-md hover:bg-[#e9e9e7] text-xs font-medium transition-colors"
                     >
                         Cancel
                     </button>
@@ -106,7 +106,7 @@ export const CardComponent = ({ card }: CardProps) => {
     const clusterLabel = getClusterLabel(card.clusterId);
 
     return (
-        <div className={`rounded-lg p-3 shadow-sm hover:shadow-md transition-all cursor-move border-2 ${card.clusterId ? clusterColors.bg + ' ' + clusterColors.border : 'bg-white border-gray-200'
+        <div className={`rounded-lg p-3 shadow-sm hover:shadow-md transition-all duration-200 cursor-grab active:cursor-grabbing border ${card.clusterId ? clusterColors.bg + ' ' + clusterColors.border : 'bg-white border-[#e9e9e7]'
             }`}>
             {card.clusterId && (
                 <div className="flex items-center gap-1 mb-2">
@@ -116,30 +116,25 @@ export const CardComponent = ({ card }: CardProps) => {
                 </div>
             )}
             <div className="flex items-start justify-between mb-2">
-                <h4 className="font-medium text-gray-800 flex-1">{card.title}</h4>
+                <h4 className="font-medium text-[#37352f] flex-1 text-sm">{card.title}</h4>
                 <div className="flex items-center gap-1">
                     {getMoodIcon()}
                     <button
                         onClick={() => setIsEditing(true)}
-                        className="p-1 text-gray-400 hover:text-primary-600 transition-colors"
+                        className="p-1 text-[#9b9a97] hover:text-[#2383e2] transition-colors"
                     >
-                        <Edit2 className="w-3 h-3" />
+                        <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
                         onClick={handleDelete}
-                        className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                        className="p-1 text-[#9b9a97] hover:text-red-500 transition-colors"
                     >
-                        <Trash2 className="w-3 h-3" />
+                        <Trash2 className="w-3.5 h-3.5" />
                     </button>
                 </div>
             </div>
             {card.description && (
-                <p className="text-sm text-gray-600 line-clamp-3">{card.description}</p>
-            )}
-            {card.clusterId && (
-                <div className="mt-2 text-xs text-gray-500">
-                    🏷️ {card.clusterId}
-                </div>
+                <p className="text-sm text-[#787774] line-clamp-3 leading-relaxed">{card.description}</p>
             )}
         </div>
     );

@@ -53,23 +53,26 @@ export const Dashboard = () => {
     }
 
     return (
-        <div className="min-h-screen">
-            <header className="bg-white/10 backdrop-blur-md border-b border-white/20">
-                <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
+        <div className="min-h-screen bg-[#f7f6f3]">
+            {/* Notion-style Header */}
+            <header className="bg-white border-b border-[#e9e9e7] sticky top-0 z-50">
+                <div className="container mx-auto px-6 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-6">
+                        {/* Logo */}
                         <div className="flex items-center gap-2">
-                            <Sparkles className="w-8 h-8 text-white" />
-                            <h1 className="text-2xl font-bold text-white">BrainStorm AI</h1>
+                            <Sparkles className="w-6 h-6 text-[#2383e2]" />
+                            <h1 className="text-xl font-semibold text-[#37352f]">BrainStorm AI</h1>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        {/* Board Tabs */}
+                        <div className="flex items-center gap-1">
                             {boards.map((b) => (
                                 <button
                                     key={b._id}
                                     onClick={() => loadBoard(b._id)}
-                                    className={`px-4 py-2 rounded-lg transition-colors ${board?._id === b._id
-                                            ? 'bg-white text-primary-600 font-semibold'
-                                            : 'bg-white/20 text-white hover:bg-white/30'
+                                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${board?._id === b._id
+                                            ? 'bg-[#e5f2ff] text-[#2383e2]'
+                                            : 'text-[#787774] hover:bg-[#f1f1ef] hover:text-[#37352f]'
                                         }`}
                                 >
                                     {b.name}
@@ -78,18 +81,20 @@ export const Dashboard = () => {
 
                             <button
                                 onClick={() => setShowNewBoard(true)}
-                                className="p-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors"
+                                className="p-1.5 text-[#787774] rounded-md hover:bg-[#f1f1ef] transition-colors"
                             >
                                 <Plus className="w-5 h-5" />
                             </button>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        <span className="text-white font-medium">{user?.username}</span>
+                    {/* User Menu */}
+                    <div className="flex items-center gap-3">
+                        <span className="text-sm text-[#787774] font-medium">{user?.username}</span>
                         <button
                             onClick={logout}
-                            className="p-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors"
+                            className="p-2 text-[#787774] rounded-md hover:bg-[#f1f1ef] transition-colors"
+                            title="Logout"
                         >
                             <LogOut className="w-5 h-5" />
                         </button>
@@ -97,30 +102,32 @@ export const Dashboard = () => {
                 </div>
             </header>
 
+            {/* New Board Modal - Notion style */}
             {showNewBoard && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 w-96">
-                        <h3 className="text-xl font-bold mb-4">Create New Board</h3>
+                <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 animate-slide-in">
+                    <div className="bg-white rounded-lg shadow-2xl p-6 w-[480px] border border-[#e9e9e7]">
+                        <h3 className="text-lg font-semibold text-[#37352f] mb-4">Create new board</h3>
                         <input
                             type="text"
                             value={newBoardName}
                             onChange={(e) => setNewBoardName(e.target.value)}
                             placeholder="Board name"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4 outline-none focus:ring-2 focus:ring-primary-500"
+                            className="w-full px-3 py-2 border border-[#e9e9e7] rounded-md text-[#37352f] placeholder-[#9b9a97] outline-none focus:border-[#2383e2] focus:ring-1 focus:ring-[#2383e2] transition-all mb-4"
                             autoFocus
+                            onKeyPress={(e) => e.key === 'Enter' && createBoard()}
                         />
-                        <div className="flex gap-2">
-                            <button
-                                onClick={createBoard}
-                                className="flex-1 bg-primary-600 text-white py-2 rounded-lg hover:bg-primary-700 transition-colors"
-                            >
-                                Create
-                            </button>
+                        <div className="flex gap-2 justify-end">
                             <button
                                 onClick={() => setShowNewBoard(false)}
-                                className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+                                className="px-4 py-2 text-sm text-[#787774] rounded-md hover:bg-[#f1f1ef] transition-colors"
                             >
                                 Cancel
+                            </button>
+                            <button
+                                onClick={createBoard}
+                                className="px-4 py-2 text-sm bg-[#2383e2] text-white rounded-md hover:bg-[#1a73cf] transition-colors font-medium"
+                            >
+                                Create board
                             </button>
                         </div>
                     </div>

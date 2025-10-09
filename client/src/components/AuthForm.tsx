@@ -35,62 +35,62 @@ export const AuthForm = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+        <div className="min-h-screen flex items-center justify-center p-4 bg-[#f7f6f3]">
+            <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-8 border border-[#e9e9e7]">
                 <div className="flex items-center justify-center mb-6">
-                    <Sparkles className="w-10 h-10 text-primary-600 mr-2" />
-                    <h1 className="text-3xl font-bold text-gray-800">BrainStorm AI</h1>
+                    <Sparkles className="w-10 h-10 text-[#2383e2] mr-2" />
+                    <h1 className="text-3xl font-bold text-[#37352f]">BrainStorm AI</h1>
                 </div>
 
-                <h2 className="text-2xl font-semibold text-center text-gray-700 mb-6">
+                <h2 className="text-xl font-semibold text-center text-[#37352f] mb-6">
                     {isLogin ? 'Welcome Back' : 'Create Account'}
                 </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {!isLogin && (
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-[#37352f] mb-1">
                                 Username
                             </label>
                             <input
                                 type="text"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                                className="w-full px-4 py-2 border border-[#e9e9e7] rounded-md text-[#37352f] placeholder-[#9b9a97] focus:border-[#2383e2] focus:ring-1 focus:ring-[#2383e2] outline-none transition-all"
                                 required={!isLogin}
                             />
                         </div>
                     )}
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-[#37352f] mb-1">
                             Email
                         </label>
                         <input
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                            className="w-full px-4 py-2 border border-[#e9e9e7] rounded-md text-[#37352f] placeholder-[#9b9a97] focus:border-[#2383e2] focus:ring-1 focus:ring-[#2383e2] outline-none transition-all"
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-[#37352f] mb-1">
                             Password
                         </label>
                         <input
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                            className="w-full px-4 py-2 border border-[#e9e9e7] rounded-md text-[#37352f] placeholder-[#9b9a97] focus:border-[#2383e2] focus:ring-1 focus:ring-[#2383e2] outline-none transition-all"
                             required
                             minLength={6}
                         />
                     </div>
 
                     {error && (
-                        <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm">
+                        <div className="bg-red-50 text-red-600 px-4 py-2 rounded-md text-sm border border-red-200">
                             {error}
                         </div>
                     )}
@@ -98,7 +98,7 @@ export const AuthForm = () => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-primary-600 text-white py-2 rounded-lg font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full bg-[#2383e2] text-white py-2.5 rounded-md font-semibold hover:bg-[#1a73cf] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {loading ? 'Processing...' : isLogin ? 'Login' : 'Register'}
                     </button>
@@ -107,7 +107,7 @@ export const AuthForm = () => {
                 <div className="mt-6 text-center">
                     <button
                         onClick={() => setIsLogin(!isLogin)}
-                        className="text-primary-600 hover:text-primary-700 font-medium"
+                        className="text-[#2383e2] hover:text-[#1a73cf] font-medium text-sm"
                     >
                         {isLogin ? "Don't have an account? Register" : 'Already have an account? Login'}
                     </button>
