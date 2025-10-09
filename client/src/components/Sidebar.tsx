@@ -4,14 +4,15 @@ import { Sparkles, Search, Layers, FileText, Download, X, Loader } from 'lucide-
 import ReactMarkdown from 'react-markdown';
 
 export const Sidebar = () => {
-    const { suggestions, summary, clusterCards, summarizeBoard, searchCards, loading, createCard, columns } = useBoard();
+    const { suggestions, summary, clusterCards, summarizeBoard, searchCards, loading, createCard, columns, clusters } = useBoard();
     const [activeTab, setActiveTab] = useState<'suggestions' | 'summary' | 'search'>('suggestions');
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<any[]>([]);
     const [showSidebar, setShowSidebar] = useState(true);
+    const [clusterThreshold, setClusterThreshold] = useState(0.7);
 
     const handleCluster = async () => {
-        await clusterCards(0.7);
+        await clusterCards(clusterThreshold);
     };
 
     const handleSummarize = async () => {
@@ -91,30 +92,62 @@ export const Sidebar = () => {
                 </button>
             </div>
 
-            <div className="flex gap-2 mb-4">
-                <button
-                    onClick={handleCluster}
-                    disabled={loading}
-                    className="flex-1 bg-white/20 text-white py-2 px-3 rounded-lg hover:bg-white/30 transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50"
-                >
-                    <Layers className="w-4 h-4" />
-                    Cluster
-                </button>
-                <button
-                    onClick={handleSummarize}
-                    disabled={loading}
-                    className="flex-1 bg-white/20 text-white py-2 px-3 rounded-lg hover:bg-white/30 transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50"
-                >
-                    <FileText className="w-4 h-4" />
-                    Summarize
-                </button>
-                <button
-                    onClick={exportMarkdown}
-                    disabled={!summary}
-                    className="bg-white/20 text-white py-2 px-3 rounded-lg hover:bg-white/30 transition-colors disabled:opacity-50"
-                >
-                    <Download className="w-4 h-4" />
-                </button>
+            <div className="mb-4 space-y-2">
+                <div className="flex gap-2">
+                    <button
+                        onClick={handleCluster}
+                        disabled={loading}
+                        className="flex-1 bg-white/20 text-white py-2 px-3 rounded-lg hover:bg-white/30 transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+                    >
+                        <Layers className="w-4 h-4" />
+                        Cluster
+                    </button>
+                    <button
+                        onClick={handleSummarize}
+                        disabled={loading}
+                        className="flex-1 bg-white/20 text-white py-2 px-3 rounded-lg hover:bg-white/30 transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+                    >
+                        <FileText className="w-4 h-4" />
+                        Summarize
+                    </button>
+                    <button
+                        onClick={exportMarkdown}
+                        disabled={!summary}
+                        className="bg-white/20 text-white py-2 px-3 rounded-lg hover:bg-white/30 transition-colors disabled:opacity-50"
+                    >
+                        <Download className="w-4 h-4" />
+                    </button>
+                </div>
+                
+                {/* Cluster Threshold Slider */}
+                <div className="bg-white/10 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="text-white text-xs font-medium">Similarity Threshold</label>
+                        <span className="text-white text-xs bg-white/20 px-2 py-0.5 rounded">{clusterThreshold.toFixed(2)}</span>
+                    </div>
+                    <input
+                        type="range"
+                        min="0.5"
+                        max="0.95"
+                        step="0.05"
+                        value={clusterThreshold}
+                        onChange={(e) => setClusterThreshold(parseFloat(e.target.value))}
+                        className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer"
+                    />
+                    <div className="flex justify-between text-white/60 text-xs mt-1">
+                        <span>Loose</span>
+                        <span>Tight</span>
+                    </div>
+                </div>
+
+                {/* Cluster Info */}
+                {clusters && clusters.length > 0 && (
+                    <div className="bg-primary-500/20 border border-primary-400/30 rounded-lg p-3">
+                        <p className="text-white text-xs">
+                            🎯 Found <strong>{clusters.length}</strong> cluster{clusters.length > 1 ? 's' : ''} of similar ideas!
+                        </p>
+                    </div>
+                )}
             </div>
 
             <div className="flex-1 overflow-y-auto scrollbar-thin">

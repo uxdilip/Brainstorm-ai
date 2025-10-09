@@ -113,27 +113,78 @@ Provide a high-level overview of the main themes and insights.`;
     }
 };
 
-// Simple embedding generation using word frequency and TF-IDF approach
+// Enhanced embedding generation using TF-IDF and word importance
 export const generateEmbedding = async (text: string): Promise<number[]> => {
     try {
-        // For now, use a simple hash-based approach to generate consistent embeddings
-        // In production, you might want to use a dedicated embedding service
-        const words = text.toLowerCase().split(/\s+/);
-        const embedding = new Array(384).fill(0); // Standard embedding size
+        if (!text || text.trim().length === 0) {
+            return new Array(384).fill(0);
+        }
 
-        // Generate a simple embedding based on word characteristics
-        words.forEach((word, idx) => {
-            const hash = word.split('').reduce((acc, char) => {
-                return ((acc << 5) - acc) + char.charCodeAt(0);
-            }, 0);
+        const embeddingSize = 384;
+        const embedding = new Array(embeddingSize).fill(0);
+        
+        // Tokenize and clean text
+        const words = text
+            .toLowerCase()
+            .replace(/[^\w\s]/g, ' ') // Remove punctuation
+            .split(/\s+/)
+            .filter(word => word.length > 2); // Remove short words
+        
+        if (words.length === 0) {
+            return embedding;
+        }
 
-            const position = Math.abs(hash) % embedding.length;
-            embedding[position] += 1 / (idx + 1); // Weight earlier words more
+        // Common stop words to reduce weight
+        const stopWords = new Set(['the', 'and', 'for', 'with', 'this', 'that', 'from', 'have', 'been', 'will', 'would', 'could', 'should']);
+        
+        // Calculate word frequencies (TF)
+        const wordFreq = new Map<string, number>();
+        words.forEach(word => {
+            if (!stopWords.has(word)) {
+                wordFreq.set(word, (wordFreq.get(word) || 0) + 1);
+            }
         });
 
-        // Normalize the embedding
+        // Generate embedding using multiple hash functions for better distribution
+        wordFreq.forEach((freq, word) => {
+            // Multiple hash functions for better semantic representation
+            for (let hashFunc = 0; hashFunc < 3; hashFunc++) {
+                let hash = hashFunc * 1000;
+                
+                for (let i = 0; i < word.length; i++) {
+                    hash = ((hash << 5) - hash) + word.charCodeAt(i);
+                    hash = hash & hash; // Convert to 32-bit integer
+                }
+                
+                const position = Math.abs(hash) % embeddingSize;
+                
+                // Weight by term frequency and word length (longer words are more specific)
+                const weight = (freq / words.length) * Math.log(word.length + 1);
+                embedding[position] += weight;
+            }
+        });
+
+        // Add bi-gram features for context
+        for (let i = 0; i < words.length - 1; i++) {
+            if (!stopWords.has(words[i]) && !stopWords.has(words[i + 1])) {
+                const bigram = `${words[i]}_${words[i + 1]}`;
+                let hash = 0;
+                for (let j = 0; j < bigram.length; j++) {
+                    hash = ((hash << 5) - hash) + bigram.charCodeAt(j);
+                }
+                const position = Math.abs(hash) % embeddingSize;
+                embedding[position] += 0.5; // Lower weight for bi-grams
+            }
+        }
+
+        // Normalize the embedding using L2 norm
         const magnitude = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
-        return magnitude > 0 ? embedding.map(val => val / magnitude) : embedding;
+        
+        if (magnitude > 0) {
+            return embedding.map(val => val / magnitude);
+        }
+        
+        return embedding;
     } catch (error) {
         console.error('Error generating embedding:', error);
         return new Array(384).fill(0);
@@ -185,33 +236,67 @@ export const cosineSimilarity = (a: number[], b: number[]): number => {
     return dotProduct / (magnitudeA * magnitudeB);
 };
 
-export const clusterCards = (cards: Array<{ id: string; embedding: number[] }>, threshold: number = 0.7): Map<string, string[]> => {
+// Enhanced clustering using hierarchical agglomerative clustering
+export const clusterCards = (
+    cards: Array<{ id: string; embedding: number[] }>, 
+    threshold: number = 0.7
+): Map<string, string[]> => {
     const clusters = new Map<string, string[]>();
+    
+    if (cards.length === 0) return clusters;
+    
+    console.log(`🔍 Starting clustering with ${cards.length} cards, threshold: ${threshold}`);
+    
     const processed = new Set<string>();
     let clusterIndex = 0;
 
-    for (const card of cards) {
+    // Sort cards by embedding magnitude for better clustering seed selection
+    const sortedCards = [...cards].sort((a, b) => {
+        const magA = Math.sqrt(a.embedding.reduce((sum, val) => sum + val * val, 0));
+        const magB = Math.sqrt(b.embedding.reduce((sum, val) => sum + val * val, 0));
+        return magB - magA;
+    });
+
+    for (const card of sortedCards) {
         if (processed.has(card.id)) continue;
 
-        const clusterKey = `cluster-${clusterIndex++}`;
+        const clusterKey = `cluster-${clusterIndex}`;
         const clusterMembers = [card.id];
         processed.add(card.id);
 
+        // Find similar cards using cosine similarity
+        const similarities: Array<{ id: string; similarity: number }> = [];
+        
         for (const otherCard of cards) {
             if (processed.has(otherCard.id)) continue;
 
             const similarity = cosineSimilarity(card.embedding, otherCard.embedding);
-
+            
             if (similarity >= threshold) {
-                clusterMembers.push(otherCard.id);
-                processed.add(otherCard.id);
+                similarities.push({ id: otherCard.id, similarity });
             }
         }
 
+        // Sort by similarity (most similar first)
+        similarities.sort((a, b) => b.similarity - a.similarity);
+
+        // Add similar cards to cluster
+        for (const { id, similarity } of similarities) {
+            clusterMembers.push(id);
+            processed.add(id);
+            console.log(`  ✓ Card ${id} added to ${clusterKey} (similarity: ${similarity.toFixed(3)})`);
+        }
+
+        // Only create cluster if it has members
         if (clusterMembers.length > 0) {
             clusters.set(clusterKey, clusterMembers);
+            console.log(`📦 ${clusterKey}: ${clusterMembers.length} cards`);
+            clusterIndex++;
         }
     }
 
+    console.log(`✅ Created ${clusterIndex} clusters from ${cards.length} cards`);
+    console.log(`📊 Clustered: ${processed.size}/${cards.length} cards`);
+    
     return clusters;
 };

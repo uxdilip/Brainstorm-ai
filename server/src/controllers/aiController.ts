@@ -80,6 +80,8 @@ export const clusterBoardCards = async (req: AuthRequest, res: Response): Promis
     try {
         const { boardId, threshold } = req.body;
 
+        console.log('🎯 Clustering request:', { boardId, threshold: threshold || 0.7 });
+
         const board = await Board.findOne({
             _id: boardId,
             $or: [
@@ -96,32 +98,76 @@ export const clusterBoardCards = async (req: AuthRequest, res: Response): Promis
         const cards = await Card.find({ boardId });
 
         if (cards.length === 0) {
-            res.json({ clusters: [] });
+            res.json({ 
+                clusters: [], 
+                message: 'No cards to cluster',
+                stats: { totalCards: 0, clustersCreated: 0 }
+            });
             return;
         }
 
+        console.log(`📋 Found ${cards.length} cards to cluster`);
+
+        // Generate embeddings for cards that don't have them
         const cardsWithEmbeddings = await Promise.all(
             cards.map(async (card) => {
                 if (!card.embedding || card.embedding.length === 0) {
+                    console.log(`🔄 Generating embedding for card: ${card.title}`);
                     const embedding = await generateEmbedding(`${card.title} ${card.description}`);
                     card.embedding = embedding;
                     await card.save();
                 }
                 return {
                     id: card._id.toString(),
+                    title: card.title,
                     embedding: card.embedding
                 };
             })
         );
 
+        // Perform clustering
         const clusters = clusterCards(cardsWithEmbeddings, threshold || 0.7);
 
-        const clusterArray = Array.from(clusters.entries()).map(([clusterId, cardIds]) => ({
-            clusterId,
-            cardIds,
-            cards: cards.filter(card => cardIds.includes(card._id.toString()))
-        }));
+        // Build cluster metadata with labels
+        const clusterArray = Array.from(clusters.entries()).map(([clusterId, cardIds]) => {
+            const clusterCards = cards.filter(card => cardIds.includes(card._id.toString()));
+            
+            // Generate cluster label from most common words
+            const allWords = clusterCards
+                .map(c => `${c.title} ${c.description}`)
+                .join(' ')
+                .toLowerCase()
+                .split(/\s+/)
+                .filter(w => w.length > 3);
+            
+            const wordFreq = new Map<string, number>();
+            allWords.forEach(word => {
+                wordFreq.set(word, (wordFreq.get(word) || 0) + 1);
+            });
+            
+            const topWords = Array.from(wordFreq.entries())
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 2)
+                .map(([word]) => word);
+            
+            const label = topWords.length > 0 
+                ? topWords.join(' & ') 
+                : clusterCards[0]?.title.substring(0, 20) || 'Unnamed Cluster';
 
+            return {
+                clusterId,
+                label: label.charAt(0).toUpperCase() + label.slice(1),
+                cardIds,
+                cardCount: cardIds.length,
+                cards: clusterCards.map(c => ({
+                    _id: c._id,
+                    title: c.title,
+                    description: c.description
+                }))
+            };
+        });
+
+        // Update cards with cluster IDs in database
         for (const cluster of clusterArray) {
             await Card.updateMany(
                 { _id: { $in: cluster.cardIds } },
@@ -129,9 +175,20 @@ export const clusterBoardCards = async (req: AuthRequest, res: Response): Promis
             );
         }
 
-        res.json({ clusters: clusterArray });
+        console.log(`✅ Clustering complete: ${clusterArray.length} clusters created`);
+
+        res.json({ 
+            clusters: clusterArray,
+            stats: {
+                totalCards: cards.length,
+                clustersCreated: clusterArray.length,
+                averageClusterSize: cards.length / clusterArray.length,
+                threshold: threshold || 0.7
+            }
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Server error' });
+        console.error('❌ Error clustering cards:', error);
+        res.status(500).json({ message: 'Server error', error: String(error) });
     }
 };
 
