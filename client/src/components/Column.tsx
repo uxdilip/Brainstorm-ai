@@ -11,7 +11,7 @@ interface ColumnProps {
 export const ColumnComponent = ({ cards }: ColumnProps) => {
     if (cards.length === 0) {
         return (
-            <div className="flex items-center justify-center h-32 text-[#9b9a97] text-sm">
+            <div className="flex items-center justify-center h-24 sm:h-32 text-[#9b9a97] text-xs sm:text-sm text-center px-2">
                 Drop cards here or drag from Ideas
             </div>
         );

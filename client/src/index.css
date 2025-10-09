@@ -51,6 +51,16 @@ body {
         background-clip: padding-box;
     }
 
+    /* Hide scrollbar on mobile */
+    .scrollbar-none {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .scrollbar-none::-webkit-scrollbar {
+        display: none;
+    }
+
     /* Custom animations */
     @keyframes slideIn {
         from {
@@ -75,5 +85,12 @@ body {
 
     .card-shadow:hover {
         box-shadow: 0 4px 12px rgba(15, 15, 15, 0.15);
+    }
+
+    /* Mobile touch improvements */
+    @media (max-width: 768px) {
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
     }
 }

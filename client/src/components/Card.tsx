@@ -71,17 +71,17 @@ export const CardComponent = ({ card }: CardProps) => {
 
     if (isEditing) {
         return (
-            <div className="bg-white rounded-lg p-3 shadow-md border border-[#e9e9e7] space-y-2">
+            <div className="bg-white rounded-lg p-2 sm:p-3 shadow-md border border-[#e9e9e7] space-y-2">
                 <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-2 py-1 border border-[#e9e9e7] rounded-md text-sm text-[#37352f] outline-none focus:border-[#2383e2] focus:ring-1 focus:ring-[#2383e2] transition-all"
+                    className="w-full px-2 py-1 border border-[#e9e9e7] rounded-md text-xs sm:text-sm text-[#37352f] outline-none focus:border-[#2383e2] focus:ring-1 focus:ring-[#2383e2] transition-all"
                 />
                 <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-2 py-1 border border-[#e9e9e7] rounded-md text-sm text-[#37352f] outline-none focus:border-[#2383e2] focus:ring-1 focus:ring-[#2383e2] resize-none transition-all"
+                    className="w-full px-2 py-1 border border-[#e9e9e7] rounded-md text-xs sm:text-sm text-[#37352f] outline-none focus:border-[#2383e2] focus:ring-1 focus:ring-[#2383e2] resize-none transition-all"
                     rows={2}
                 />
                 <div className="flex gap-2">
@@ -106,35 +106,35 @@ export const CardComponent = ({ card }: CardProps) => {
     const clusterLabel = getClusterLabel(card.clusterId);
 
     return (
-        <div className={`rounded-lg p-3 shadow-sm hover:shadow-md transition-all duration-200 cursor-grab active:cursor-grabbing border ${card.clusterId ? clusterColors.bg + ' ' + clusterColors.border : 'bg-white border-[#e9e9e7]'
+        <div className={`rounded-lg p-2 sm:p-3 shadow-sm hover:shadow-md transition-all duration-200 cursor-grab active:cursor-grabbing border ${card.clusterId ? clusterColors.bg + ' ' + clusterColors.border : 'bg-white border-[#e9e9e7]'
             }`}>
             {card.clusterId && (
-                <div className="flex items-center gap-1 mb-2">
-                    <span className={`text-xs px-2 py-0.5 rounded-full text-white font-medium ${clusterColors.label}`}>
+                <div className="flex items-center gap-1 mb-1 sm:mb-2">
+                    <span className={`text-xs px-1.5 sm:px-2 py-0.5 rounded-full text-white font-medium ${clusterColors.label}`}>
                         {clusterLabel} Cluster {card.clusterId.replace('cluster-', '')}
                     </span>
                 </div>
             )}
-            <div className="flex items-start justify-between mb-2">
-                <h4 className="font-medium text-[#37352f] flex-1 text-sm">{card.title}</h4>
-                <div className="flex items-center gap-1">
+            <div className="flex items-start justify-between mb-1 sm:mb-2">
+                <h4 className="font-medium text-[#37352f] flex-1 text-xs sm:text-sm">{card.title}</h4>
+                <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0 ml-1">
                     {getMoodIcon()}
                     <button
                         onClick={() => setIsEditing(true)}
-                        className="p-1 text-[#9b9a97] hover:text-[#2383e2] transition-colors"
+                        className="p-0.5 sm:p-1 text-[#9b9a97] hover:text-[#2383e2] transition-colors"
                     >
-                        <Edit2 className="w-3.5 h-3.5" />
+                        <Edit2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     </button>
                     <button
                         onClick={handleDelete}
-                        className="p-1 text-[#9b9a97] hover:text-red-500 transition-colors"
+                        className="p-0.5 sm:p-1 text-[#9b9a97] hover:text-red-500 transition-colors"
                     >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     </button>
                 </div>
             </div>
             {card.description && (
-                <p className="text-sm text-[#787774] line-clamp-3 leading-relaxed">{card.description}</p>
+                <p className="text-xs sm:text-sm text-[#787774] line-clamp-3 leading-relaxed">{card.description}</p>
             )}
         </div>
     );
