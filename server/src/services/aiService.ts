@@ -15,14 +15,35 @@ const getGroqClient = () => {
 };
 
 export const generateIdeasuggestions = async (
-    boardTitle: string,
+    cardTitle: string,
+    cardDescription: string,
     existingCards: string[]
 ): Promise<string[]> => {
     try {
         const groq = getGroqClient();
 
-        const prompt = `Given a brainstorming board titled "${boardTitle}" with existing ideas: ${existingCards.join(', ')}.
-Generate 3 new creative and diverse ideas that complement the existing ones. Return only the ideas, one per line, without numbering or extra formatting.`;
+        // Build context from existing cards if available
+        const contextText = existingCards.length > 0 
+            ? `\n\nExisting ideas on the board:\n${existingCards.join('\n- ')}`
+            : '';
+
+        const prompt = `You are a creative brainstorming assistant. A user just added this idea to their brainstorming board:
+
+Title: "${cardTitle}"
+Description: "${cardDescription}"
+${contextText}
+
+Based on this new idea, generate 3 related and complementary suggestions that would help expand on this concept. The suggestions should be:
+- Directly related to "${cardTitle}"
+- Creative and diverse
+- Actionable and specific
+- One per line
+
+Return ONLY the 3 suggestions, one per line, without numbering, bullet points, or extra formatting.`;
+
+        console.log('🤖 Sending prompt to Groq...');
+        console.log('📝 Card Title:', cardTitle);
+        console.log('📝 Card Description:', cardDescription);
 
         const completion = await groq.chat.completions.create({
             messages: [
@@ -33,19 +54,33 @@ Generate 3 new creative and diverse ideas that complement the existing ones. Ret
             ],
             model: 'llama-3.1-8b-instant',
             temperature: 0.8,
-            max_tokens: 200
+            max_tokens: 250
         });
 
         const response = completion.choices[0]?.message?.content || '';
+        console.log('✅ Groq response:', response);
 
         // Parse the response into an array of suggestions
-        return response.split('\n').filter((line: string) => line.trim()).slice(0, 3);
+        const suggestions = response
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0 && !line.match(/^[\d\-\*\•\.\)]+\s/)) // Remove numbering/bullets
+            .map(line => line.replace(/^[\d\-\*\•\.\)]+\s*/, '').trim()) // Clean up any remaining formatting
+            .slice(0, 3);
+
+        console.log('✨ Parsed suggestions:', suggestions);
+
+        return suggestions.length > 0 ? suggestions : [
+            `Explore implementation details for ${cardTitle}`,
+            `Consider potential challenges with ${cardTitle}`,
+            `Research best practices for ${cardTitle}`
+        ];
     } catch (error) {
-        console.error('Error generating idea suggestions:', error);
+        console.error('❌ Error generating idea suggestions:', error);
         return [
-            'Explore alternative perspectives',
-            'Consider the user experience',
-            'Think about scalability'
+            `Explore alternative approaches to ${cardTitle}`,
+            `Consider the user impact of ${cardTitle}`,
+            `Think about scaling ${cardTitle}`
         ];
     }
 };

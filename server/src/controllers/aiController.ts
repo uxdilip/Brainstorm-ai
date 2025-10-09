@@ -8,6 +8,8 @@ export const getSuggestions = async (req: AuthRequest, res: Response): Promise<v
     try {
         const { cardTitle, cardDescription, boardId } = req.body;
 
+        console.log('🤖 AI Suggestions Request:', { cardTitle, cardDescription, boardId });
+
         const board = await Board.findOne({
             _id: boardId,
             $or: [
@@ -24,11 +26,16 @@ export const getSuggestions = async (req: AuthRequest, res: Response): Promise<v
         const existingCards = await Card.find({ boardId }).limit(20);
         const boardContext = existingCards.map(card => `${card.title}: ${card.description}`);
 
+        console.log('📋 Board context:', boardContext.length, 'existing cards');
+
         const suggestions = await generateIdeasuggestions(cardTitle, cardDescription, boardContext);
+
+        console.log('✨ Generated suggestions:', suggestions);
 
         res.json({ suggestions });
     } catch (error) {
-        res.status(500).json({ message: 'Server error' });
+        console.error('❌ Error in getSuggestions:', error);
+        res.status(500).json({ message: 'Server error', error: String(error) });
     }
 };
 

@@ -75,16 +75,21 @@ export const BoardProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const getSuggestions = async (cardTitle: string, cardDescription: string) => {
+        setLoading(true);
         try {
+            console.log('🤖 Requesting AI suggestions for:', cardTitle);
             const response = await api.post('/ai/suggest', {
                 cardTitle,
                 cardDescription,
                 boardId: board?._id
             });
+            console.log('✅ Received suggestions:', response.data.suggestions);
             setSuggestions(response.data.suggestions);
         } catch (error) {
-            console.error('Error getting suggestions:', error);
+            console.error('❌ Error getting suggestions:', error);
             setSuggestions([]);
+        } finally {
+            setLoading(false);
         }
     };
 

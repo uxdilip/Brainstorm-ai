@@ -120,21 +120,51 @@ export const Sidebar = () => {
             <div className="flex-1 overflow-y-auto scrollbar-thin">
                 {activeTab === 'suggestions' && (
                     <div className="space-y-3">
-                        <h3 className="text-white font-semibold mb-2">AI Suggestions</h3>
-                        {suggestions.length === 0 ? (
-                            <p className="text-white/70 text-sm">Add a new card to get AI-powered idea suggestions!</p>
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-white font-semibold">💡 AI Suggestions</h3>
+                            {suggestions.length > 0 && (
+                                <span className="text-xs text-white/70 bg-white/20 px-2 py-1 rounded">
+                                    {suggestions.length} ideas
+                                </span>
+                            )}
+                        </div>
+                        {loading ? (
+                            <div className="flex flex-col items-center justify-center py-8 space-y-2">
+                                <Loader className="w-6 h-6 text-white animate-spin" />
+                                <p className="text-white/70 text-sm">Generating creative suggestions...</p>
+                            </div>
+                        ) : suggestions.length === 0 ? (
+                            <div className="bg-white/10 rounded-lg p-4 text-center">
+                                <Sparkles className="w-12 h-12 text-white/50 mx-auto mb-2" />
+                                <p className="text-white/70 text-sm">
+                                    Add a new card to get AI-powered idea suggestions!
+                                </p>
+                                <p className="text-white/50 text-xs mt-2">
+                                    I'll analyze your idea and suggest 3 related concepts
+                                </p>
+                            </div>
                         ) : (
-                            suggestions.map((suggestion, index) => (
-                                <div key={index} className="bg-white/20 rounded-lg p-3">
-                                    <p className="text-white text-sm mb-2">{suggestion}</p>
-                                    <button
-                                        onClick={() => addSuggestion(suggestion)}
-                                        className="text-xs bg-white text-primary-600 px-3 py-1 rounded hover:bg-gray-100 transition-colors"
-                                    >
-                                        Add to Board
-                                    </button>
+                            <>
+                                <div className="bg-primary-500/20 border border-primary-400/30 rounded-lg p-3 mb-3">
+                                    <p className="text-white/90 text-xs">
+                                        💡 Click "Add to Board" to quickly create a card from any suggestion
+                                    </p>
                                 </div>
-                            ))
+                                {suggestions.map((suggestion, index) => (
+                                    <div key={index} className="bg-white/20 rounded-lg p-3 hover:bg-white/30 transition-colors border border-white/10">
+                                        <div className="flex items-start gap-2 mb-2">
+                                            <span className="text-primary-300 font-bold text-sm">{index + 1}.</span>
+                                            <p className="text-white text-sm flex-1">{suggestion}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => addSuggestion(suggestion)}
+                                            className="w-full text-xs bg-white text-primary-600 px-3 py-2 rounded hover:bg-gray-100 transition-colors font-medium flex items-center justify-center gap-1"
+                                        >
+                                            <span>+</span> Add to Board
+                                        </button>
+                                    </div>
+                                ))}
+                            </>
                         )}
                     </div>
                 )}
