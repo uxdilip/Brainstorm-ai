@@ -8,13 +8,6 @@ An intelligent brainstorming board with AI-powered features for enhanced creativ
 [![Node.js](https://img.shields.io/badge/Node.js-43853D?style=flat&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=flat&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
 
-## 🌐 Live Demo
-
-- **Frontend:** [https://client-bnr6v2p6g-dilip-kumars-projects-59ff9257.vercel.app](https://client-bnr6v2p6g-dilip-kumars-projects-59ff9257.vercel.app)
-- **Backend API:** [https://server-i8g5rd26l-dilip-kumars-projects-59ff9257.vercel.app](https://server-i8g5rd26l-dilip-kumars-projects-59ff9257.vercel.app)
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/uxdilip/Brainstorm-ai)
-
 ## ✨ Features
 
 ### Core Features
